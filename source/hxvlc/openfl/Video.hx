@@ -1222,7 +1222,8 @@ class Video extends Bitmap implements IVideo
 				else if (bitmapData != null && bitmapData.image != null)
 					bitmapData.setPixels(bitmapData.rect, texturePlanesBytes);
 
-				__setRenderDirty();
+				if (__renderable)
+					__setRenderDirty();
 
 				textureMutex.release();
 			}

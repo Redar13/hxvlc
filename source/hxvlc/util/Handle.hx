@@ -177,6 +177,7 @@ class Handle
 			#if android
 			final homePath:String = Path.join([Path.directory(System.applicationStorageDirectory), 'libvlc']);
 
+			#if !HXVLC_NO_SHARE_DIRECTORY
 			Assets.loadLibrary('libvlc').onComplete(function(library:AssetLibrary):Void
 			{
 				final sharePath:String = Path.join([homePath, '.share']);
@@ -201,17 +202,27 @@ class Handle
 			{
 				Log.warn('Failed to load library: libvlc, Error: $error');
 			});
-
-			Sys.putEnv('HOME', homePath);
-			#elseif (windows || macos)
-			final dataPath:String = Path.join([Path.directory(Sys.programPath()), 'share']);
-			final pluginPath:String = Path.join([Path.directory(Sys.programPath()), 'plugins']);
-
-			Sys.putEnv('VLC_DATA_PATH', dataPath);
-			Sys.putEnv('VLC_PLUGIN_PATH', pluginPath);
 			#end
 
-			var args:cpp.VectorConstCharStar = cpp.VectorConstCharStar.alloc();
+			Sys.putEnv('HOME', homePath);
+			#elseif macos
+			final dataPath:String = Path.join([Path.directory(Sys.programPath()), 'share']);
+
+			if (FileSystem.exists(dataPath))
+				Sys.putEnv('VLC_DATA_PATH', dataPath);
+
+			final pluginPath:String = Path.join([Path.directory(Sys.programPath()), 'plugins']);
+
+			if (FileSystem.exists(pluginPath))
+				Sys.putEnv('VLC_PLUGIN_PATH', pluginPath);
+			#elseif windows
+			final pluginPath:String = Path.join([Path.directory(Sys.programPath()), 'plugins']);
+
+			if (FileSystem.exists(pluginPath))
+				Sys.putEnv('VLC_PLUGIN_PATH', pluginPath);
+			#end
+
+			final args:cpp.VectorConstCharStar = cpp.VectorConstCharStar.alloc();
 			#if (android || ios || macos)
 			args.push_back("--audio-resampler=soxr");
 			#end
@@ -222,7 +233,7 @@ class Handle
 			args.push_back("--no-interact");
 			args.push_back("--no-snapshot-preview");
 			args.push_back("--no-spu");
-			#if HXVLC_NO_PLAYLIST
+			#if  HXVLC_NO_SHARE_DIRECTORY
 			args.push_back("---no-lua");
 			#end
 			args.push_back("--no-sub-autodetect-file");
